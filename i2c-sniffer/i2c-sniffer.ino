@@ -1,3 +1,5 @@
+#pragma GCC optimize ("-O3")
+
 //////////////////////////
 // i2c sniffer by rricharz
 //////////////////////////
@@ -13,11 +15,11 @@
 
 #define SDA_MASK          0x80                        // Pin 30 (PC7) on PINC is used for the SDA line
 #define SCL_MASK          0x40                        // Pin 31 (PC6) on PINC is used for the SCL line
-#define SAMPLE            (PINC & 0xC0)               // both pins
+//#define SAMPLE            (PINC & 0xC0)               // both pins
 #define START1            0xC0                        // start condition: transition from START1 to START2
 #define START2            0x40
 
-#define BUFFSIZE          5000
+#define BUFFSIZE          7000
 
 // The Aduino is not fast enough to acquire and display the data at the same time.
 // This is usually not a problem because the i2c access normally happens in bursts.
@@ -36,10 +38,15 @@
 
 byte buffer[BUFFSIZE];
 
+static volatile uint8_t *dataport;
+#define SAMPLE ((*dataport) & 0xC0)
+
 ////////////
 void setup()
 ////////////
 {
+  dataport = portInputRegister(digitalPinToPort(30));
+
   Serial.begin(115200);
   Serial.println("\ni2c sniffer by rricharz\n");
 }
@@ -61,29 +68,29 @@ int acquire_data()
 // Pins are hard coded for speed reason
 {
   unsigned long endtime;
-  unsigned int data,lastData;
+  uint8_t data,lastData;
 
   Serial.println("Acquiring data");
 
   // wait until start condition is fullfilled
-  bool start = false;
+  /*bool start = false;
   while (!start) {
     while ((lastData = SAMPLE) != START1);          // wait until state is START1
     while ((data = SAMPLE) == lastData);            // wait until state change
     start = (data == START2);                       // start condtion met if new state is START2
-  }
+  }*/
 
-  endtime = millis() + TIMEOUT;
+  //endtime = millis() + TIMEOUT;
   lastData = START2;
   int k = 0;
-  buffer[k++] = START1;
-  buffer[k++] = START2;
+  //buffer[k++] = START1;
+  //buffer[k++] = START2;
   do {
     
     while ((data = SAMPLE) == lastData);           // wait until data has changed
     buffer[k++] = lastData = data;
   }
-  while ((k < BUFFSIZE) && (millis() < endtime));
+  while ((k < BUFFSIZE)/* && (millis() < endtime)*/);
   return k;
 }
 
@@ -109,11 +116,11 @@ void display_data(int points)
 /////////////////////////////
 {
   int lastData, data, k, Bit, Byte, i, state,nextStart;
-  long starttime;
+  //long starttime;
 
 #define ADDRESS  0         // First state, address follows
 
-  starttime = millis();
+  //starttime = millis();
 
 /*
   // display raw data
@@ -125,11 +132,11 @@ void display_data(int points)
       Serial.println();
     Serial.print(gbuffer(k));
   }
-*/  
+*/
 
-  Serial.print("Analyzing data, number of transitions = "); Serial.println(points);
-  Serial.println("i2c bus activity: * means ACQ = 1 (not ok)");
-  k = 3;              // ignore start transition
+  //Serial.print("Analyzing data, number of transitions = "); Serial.println(points);
+  //Serial.println("i2c bus activity: * means ACQ = 1 (not ok)");
+  k = findNextStartCondition(1) + 1;              // ignore start transition
   i = 0;
   Byte = 0;
   state = ADDRESS;
@@ -141,19 +148,19 @@ void display_data(int points)
       Byte = (Byte << 1) + Bit;
       if (i++ >= 8) {
         if (state == ADDRESS) {
-          Serial.print("Dev=");
+          //Serial.print("Dev=");
           printHexByte(Byte / 4);
           if (Byte & 2)
             Serial.print(" R");
           else
             Serial.print(" W");
-          if (Byte & 1)
+          /*if (Byte & 1)
             Serial.print("*");
-          else
+          else*/
             Serial.print(" ");
           state++;
         }       
-        else if (state == 1) {
+        /*else if (state == 1) {
           Serial.print("Data=");
           printHexByte(Byte / 2);
           if (Byte & 1)
@@ -161,12 +168,12 @@ void display_data(int points)
           else
             Serial.print(" ");
           state++;
-        }
+        }*/
         else {
           printHexByte(Byte / 2);
-          if (Byte & 1)
+          /*if (Byte & 1)
             Serial.print("*");
-          else
+          else*/
             Serial.print(" ");
         }
         if (nextStart - k < 9) {
@@ -181,9 +188,9 @@ void display_data(int points)
     }
   }
   while (k < points);
-  Serial.print("Time to analyze and display data was ");
-  Serial.print(millis() - starttime);
-  Serial.println(" msec");
+  //Serial.print("Time to analyze and display data was ");
+  //Serial.print(millis() - starttime);
+  //Serial.println(" msec");
   Serial.println();
 }
 
