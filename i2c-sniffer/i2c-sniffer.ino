@@ -161,7 +161,6 @@ void display_data(int points)
           else
             Serial.print(" ");
           state++;
-          k--;                      // why ???
         }
         else {
           printHexByte(Byte / 2);
