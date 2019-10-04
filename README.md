@@ -1,11 +1,13 @@
-# i2c-sniffer-100kBaud-Arduino-Mega
+# i2c-sniffer
 
-This Arduino Mega sketch uses direct port read and bit manipulations
+This Arduino Mega/Due sketches use direct port read and bit manipulations
 to sniff an i2c bus running at up to 100 kHz.
 
 The analysis of the i2c communication is displayed on the Serial monitor.
 
 Connect SDA to pin 30 of the Arduino Mega, and SCL to pin 31.
+
+For Due use pins 26 and 25.
 
 The Aduino is not fast enough to acquire and display the data at the same time.
 This is usually not a problem because the i2c access normally happens in bursts.
@@ -21,8 +23,6 @@ If you don't know anything about the i2c activity, set the timeout initially to 
 large value, for example 10000 msec.
 This means that the sampling will go on for 10000 msec after a first i2c start
 condition has been observed.
-
-A sample output https://github.com/rricharz/i2c-sniffer-100kBaud-Arduino-Mega/blob/master/sniffer.txt is enclosed.
 
 Please open an issue in this repository if you have any problem with the program.
 
